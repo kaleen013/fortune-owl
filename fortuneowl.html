@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fortune Owl - Jogo de Cassino</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #1d1f21;
+      color: white;
+      text-align: center;
+      padding: 50px;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+      color: #f39c12;
+      text-shadow: 0px 0px 15px rgba(243, 156, 18, 0.8);
+    }
+
+    .slot-machine {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 50px;
+      position: relative;
+    }
+
+    .slot-container {
+      width: 120px;
+      height: 120px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #34495e;
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .symbol {
+      font-size: 80px;
+      transition: transform 1s ease-in-out, opacity 0.5s ease;
+    }
+
+    .spinning {
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-100%); }
+    }
+
+    .controls {
+      margin-top: 30px;
+      color: white;
+      font-size: 18px;
+    }
+
+    .control-button {
+      padding: 12px 25px;
+      font-size: 18px;
+      background-color: #2980b9;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+      border: none;
+    }
+
+    .control-button:hover {
+      background-color: #3498db;
+      transform: scale(1.05);
+    }
+
+    .result {
+      margin-top: 20px;
+      font-size: 24px;
+    }
+
+    .winning {
+      color: #27ae60;
+      font-weight: bold;
+      text-shadow: 0 0 10px #27ae60;
+    }
+
+    .losing {
+      color: #e74c3c;
+      font-weight: bold;
+      text-shadow: 0 0 10px #e74c3c;
+    }
+
+    .alert {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+
+    .bonus {
+      color: #ffcc00;
+      font-weight: bold;
+    }
+
+    .slot-container img {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎰 Fortune Owl</h1>
+
+  <p>Saldo: R$ <span id="saldo">100</span></p>
+
+  <div>
+    <label for="aposta" class="mr-2">Aposta (R$):</label>
+    <input type="number" id="aposta" min="1" value="10" class="px-4 py-2 rounded bg-gray-700 text-white">
+  </div>
+
+  <div class="slot-machine">
+    <div id="slot1" class="slot-container"><img src="https://via.placeholder.com/100x100/ff6347?text=🦉" alt="🦉"></div>
+    <div id="slot2" class="slot-container"><img src="https://via.placeholder.com/100x100/ff6347?text=💎" alt="💎"></div>
+    <div id="slot3" class="slot-container"><img src="https://via.placeholder.com/100x100/ff6347?text=🍀" alt="🍀"></div>
+  </div>
+
+  <div class="controls">
+    <button onclick="girar()" class="control-button">Girar</button>
+  </div>
+
+  <div id="mensagem" class="result"></div>
+
+  <audio id="win-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_0e560d8813.mp3?filename=short-success-sound-glockenspiel-treasure-video-game-6346.mp3"></audio>
+  <audio id="lose-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_ebf43a8c39.mp3?filename=error-2-126514.mp3"></audio>
+  <audio id="bonus-sound" src="https://cdn.pixabay.com/download/audio/2022/03/02/audio_9d39f03e70.mp3?filename=magic-bonus-5861.mp3"></audio>
+
+  <script>
+    const symbols = [
+      { name: "🦉", img: "https://via.placeholder.com/100x100/ff6347?text=🦉", payout: 20 },
+      { name: "💎", img: "https://via.placeholder.com/100x100/ff6347?text=💎", payout: 5 },
+      { name: "🍀", img: "https://via.placeholder.com/100x100/ff6347?text=🍀", payout: 4 },
+      { name: "🪙", img: "https://via.placeholder.com/100x100/ff6347?text=🪙", payout: 3 },
+      { name: "🍇", img: "https://via.placeholder.com/100x100/ff6347?text=🍇", payout: 2 },
+      { name: "🎰", img: "https://via.placeholder.com/100x100/ff6347?text=🎰", payout: 10 },
+      { name: "🍒", img: "https://via.placeholder.com/100x100/ff6347?text=🍒", payout: 7 }
+    ];
+
+    let saldo = 100;
+
+    function girar() {
+      const aposta = parseInt(document.getElementById("aposta").value);
+      if (isNaN(aposta) || aposta <= 0) {
+        document.getElementById("mensagem").textContent = "Insira um valor de aposta válido.";
+        return;
+      }
+
+      if (saldo < aposta) {
+        document.getElementById("mensagem").textContent = "Saldo insuficiente.";
+        return;
+      }
+
+      saldo -= aposta;
+      const slotElements = [
+        document.getElementById("slot1"),
+        document.getElementById("slot2"),
+        document.getElementById("slot3")
+      ];
+
+      slotElements.forEach(el => {
+        el.classList.add("spinning");
+        el.innerHTML = `<img src="https://via.placeholder.com/100x100/ff6347?text=🎲" alt="🎲">`;
+      });
+
+      setTimeout(() => {
+        const rolos = [
+          symbols[Math.floor(Math.random() * symbols.length)],
+          symbols[Math.floor(Math.random() * symbols.length)],
+          symbols[Math.floor(Math.random() * symbols.length)]
+        ];
+
+        slotElements.forEach((el, i) => {
+          el.innerHTML = `<img src="${rolos[i].img}" alt="${rolos[i].name}">`;
+          el.classList.remove("spinning");
+        });
+
+        const winSound = document.getElementById("win-sound");
+        const loseSound = document.getElementById("lose-sound");
+        const bonusSound = document.getElementById("bonus-sound");
+
+        if (rolos[0].name === rolos[1].name && rolos[1].name === rolos[2].name) {
+          let ganho = aposta * rolos[0].payout;
+          if (rolos[0].name === "🦉") {
+            ganho *= 2;  // Bônus especial do símbolo "🦉"
+            bonusSound.play();
+            document.getElementById("mensagem").textContent = `🧨 Rodada Bônus! 🦉 Você ganhou R$${ganho}!`;
+            document.getElementById("mensagem").classList.add("bonus");
+            document.getElementById("mensagem").classList.add("winning");
+          } else {
+            winSound.play();
+            document.getElementById("mensagem").textContent = `🎉 Você ganhou R$${ganho}!`;
+            document.getElementById("mensagem").classList.add("winning");
+          }
+          saldo += ganho;
+        } else {
+          document.getElementById("mensagem").textContent = "😞 Você perdeu.";
+          document.getElementById("mensagem").classList.remove("bonus");
+          document.getElementById("mensagem").classList.add("losing");
+          loseSound.play();
+        }
+
+        document.getElementById("saldo").textContent = saldo;
+      }, 1500);
+    }
+  </script>
+
+</body>
+</html>
